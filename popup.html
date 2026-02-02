@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LeetCode Progress Tracker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 450px;
+      min-height: 500px;
+      max-height: 600px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      font-size: 14px;
+      overflow-x: hidden;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #2a2a2a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #4a4a4a;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #5a5a5a;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #252525;
+      border-bottom: 1px solid #333;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      color: #888;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab:hover {
+      color: #bbb;
+      background: #2a2a2a;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+      background: #1a1a1a;
+    }
+
+    /* Tab content */
+    .tab-content {
+      display: none;
+      padding: 16px;
+      overflow-y: auto;
+      max-height: 450px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Cards */
+    .card {
+      background: #252525;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: #252525;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #888;
+    }
+
+    /* Difficulty badges */
+    .difficulty {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .difficulty.easy {
+      background: rgba(74, 222, 128, 0.2);
+      color: #4ade80;
+    }
+
+    .difficulty.medium {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+
+    .difficulty.hard {
+      background: rgba(248, 113, 113, 0.2);
+      color: #f87171;
+    }
+
+    /* Status badges */
+    .status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .status.passed {
+      background: rgba(74, 222, 128, 0.2);
+      color: #4ade80;
+    }
+
+    .status.failed {
+      background: rgba(248, 113, 113, 0.2);
+      color: #f87171;
+    }
+
+    .status.solved {
+      background: rgba(74, 222, 128, 0.2);
+      color: #4ade80;
+    }
+
+    .status.unsolved {
+      background: rgba(107, 114, 128, 0.2);
+      color: #9ca3af;
+    }
+
+    /* Difficulty breakdown */
+    .difficulty-breakdown {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .difficulty-item {
+      flex: 1;
+      text-align: center;
+    }
+
+    .difficulty-label {
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .difficulty-value {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    /* Recent activity */
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .activity-icon.passed {
+      background: rgba(74, 222, 128, 0.2);
+      color: #4ade80;
+    }
+
+    .activity-icon.failed {
+      background: rgba(248, 113, 113, 0.2);
+      color: #f87171;
+    }
+
+    .activity-info {
+      flex: 1;
+    }
+
+    .activity-title {
+      font-size: 13px;
+      color: #e0e0e0;
+      margin-bottom: 2px;
+    }
+
+    .activity-meta {
+      font-size: 11px;
+      color: #666;
+    }
+
+    .activity-time {
+      font-size: 11px;
+      color: #666;
+    }
+
+    /* Button */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: #333;
+      color: #e0e0e0;
+    }
+
+    .btn-secondary:hover {
+      background: #404040;
+    }
+
+    .btn-danger {
+      background: rgba(248, 113, 113, 0.2);
+      color: #f87171;
+    }
+
+    .btn-danger:hover {
+      background: rgba(248, 113, 113, 0.3);
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    /* Problem list */
+    .problem-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #252525;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .problem-item:hover {
+      background: #2a2a2a;
+      transform: translateX(4px);
+    }
+
+    .problem-info {
+      flex: 1;
+    }
+
+    .problem-title {
+      font-size: 14px;
+      color: #e0e0e0;
+      margin-bottom: 4px;
+    }
+
+    .problem-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .problem-tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      background: #333;
+      border-radius: 4px;
+      font-size: 10px;
+      color: #888;
+    }
+
+    .problem-arrow {
+      color: #666;
+    }
+
+    /* Problem detail */
+    .problem-detail {
+      display: none;
+    }
+
+    .problem-detail.active {
+      display: block;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #667eea;
+      cursor: pointer;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .back-btn:hover {
+      text-decoration: underline;
+    }
+
+    .problem-header {
+      margin-bottom: 16px;
+    }
+
+    .problem-header h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .attempt-item {
+      background: #2a2a2a;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+
+    .attempt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .attempt-type {
+      font-size: 12px;
+      color: #888;
+      text-transform: uppercase;
+    }
+
+    .attempt-time {
+      font-size: 11px;
+      color: #666;
+    }
+
+    .attempt-details {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .attempt-error {
+      margin-top: 8px;
+      padding: 8px;
+      background: rgba(248, 113, 113, 0.1);
+      border-radius: 4px;
+      font-size: 11px;
+      color: #f87171;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Settings */
+    .setting-group {
+      margin-bottom: 20px;
+    }
+
+    .setting-label {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      flex: 1;
+      padding: 10px 12px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 13px;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: #333;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .toggle.active {
+      background: #667eea;
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s ease;
+    }
+
+    .toggle.active::after {
+      transform: translateX(20px);
+    }
+
+    .usage-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .usage-stat {
+      text-align: center;
+    }
+
+    .usage-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #e0e0e0;
+    }
+
+    .usage-label {
+      font-size: 11px;
+      color: #666;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Insights */
+    .insights-content {
+      white-space: pre-wrap;
+      line-height: 1.6;
+      font-size: 13px;
+    }
+
+    .insights-content h1,
+    .insights-content h2,
+    .insights-content h3 {
+      color: #667eea;
+      margin: 16px 0 8px;
+    }
+
+    .insights-content ul {
+      margin-left: 20px;
+    }
+
+    .insights-content li {
+      margin-bottom: 4px;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px;
+      color: #888;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #333;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    .empty-state p {
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    .key-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .key-status.saved {
+      color: #4ade80;
+    }
+
+    .key-status.not-saved {
+      color: #f87171;
+    }
+
+    .improvement-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .improvement-item:last-child {
+      border-bottom: none;
+    }
+
+    .improvement-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .improvement-info h4 {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .improvement-info p {
+      font-size: 12px;
+      color: #888;
+    }
+
+    /* File input */
+    .file-input {
+      display: none;
+    }
+
+    /* Confirmation modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: #252525;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 350px;
+      text-align: center;
+    }
+
+    .modal h3 {
+      margin-bottom: 12px;
+    }
+
+    .modal p {
+      color: #888;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-icon">LC</div>
+    <div class="header-title">LeetCode Tracker</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">Overview</div>
+    <div class="tab" data-tab="insights">Insights</div>
+    <div class="tab" data-tab="problems">Problems</div>
+    <div class="tab" data-tab="settings">Settings</div>
+  </div>
+
+  <!-- Overview Tab -->
+  <div class="tab-content active" id="overview">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="total-problems">0</div>
+        <div class="stat-label">Problems Attempted</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-solved">0</div>
+        <div class="stat-label">Total Solved</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-attempts">0</div>
+        <div class="stat-label">Total Attempts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="success-rate">0%</div>
+        <div class="stat-label">Success Rate</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Difficulty Breakdown</div>
+      <div class="difficulty-breakdown">
+        <div class="difficulty-item">
+          <div class="difficulty-label">
+            <span class="difficulty easy">Easy</span>
+          </div>
+          <div class="difficulty-value" id="easy-stats">0/0</div>
+        </div>
+        <div class="difficulty-item">
+          <div class="difficulty-label">
+            <span class="difficulty medium">Medium</span>
+          </div>
+          <div class="difficulty-value" id="medium-stats">0/0</div>
+        </div>
+        <div class="difficulty-item">
+          <div class="difficulty-label">
+            <span class="difficulty hard">Hard</span>
+          </div>
+          <div class="difficulty-value" id="hard-stats">0/0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Recent Activity</div>
+      <div id="recent-activity">
+        <div class="empty-state">
+          <p>No activity yet. Start solving problems on LeetCode!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insights Tab -->
+  <div class="tab-content" id="insights">
+    <div class="card">
+      <div class="card-title">AI-Powered Insights</div>
+      <button class="btn btn-primary" id="generate-insights-btn" style="width: 100%; margin-bottom: 16px;">
+        Generate AI Insights
+      </button>
+      <div id="ai-insights">
+        <div class="empty-state">
+          <p>Click the button above to generate personalized insights using AI.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Improvement Points</div>
+      <div id="improvement-points">
+        <div class="improvement-item">
+          <div class="improvement-icon">📊</div>
+          <div class="improvement-info">
+            <h4>Solve Rate by Difficulty</h4>
+            <p id="solve-rate-info">Loading...</p>
+          </div>
+        </div>
+        <div class="improvement-item">
+          <div class="improvement-icon">⚠️</div>
+          <div class="improvement-info">
+            <h4>Common Issues</h4>
+            <p id="common-issues-info">Loading...</p>
+          </div>
+        </div>
+        <div class="improvement-item">
+          <div class="improvement-icon">📈</div>
+          <div class="improvement-info">
+            <h4>Average Attempts</h4>
+            <p id="avg-attempts-info">Loading...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Problems Needing Attention</div>
+      <div id="attention-problems">
+        <div class="empty-state">
+          <p>No problems need attention yet.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Problems Tab -->
+  <div class="tab-content" id="problems">
+    <div id="problem-list">
+      <div class="empty-state">
+        <p>No problems tracked yet. Start solving on LeetCode!</p>
+      </div>
+    </div>
+
+    <div class="problem-detail" id="problem-detail">
+      <div class="back-btn" id="back-to-list">
+        ← Back to Problems
+      </div>
+      <div class="problem-header">
+        <h2 id="detail-title">Problem Title</h2>
+        <div class="problem-meta">
+          <span class="difficulty easy" id="detail-difficulty">Easy</span>
+          <span id="detail-attempts">0 attempts</span>
+          <span class="status solved" id="detail-status">Solved</span>
+        </div>
+        <div class="problem-tags" id="detail-tags"></div>
+      </div>
+      <button class="btn btn-secondary btn-small" id="analyze-problem-btn" style="margin-bottom: 16px;">
+        Analyze with AI
+      </button>
+      <div id="problem-analysis"></div>
+      <div class="card-title" style="margin-top: 16px;">Attempt History</div>
+      <div id="attempt-history"></div>
+    </div>
+  </div>
+
+  <!-- Settings Tab -->
+  <div class="tab-content" id="settings">
+    <div class="card">
+      <div class="card-title">OpenAI API Key</div>
+      <div class="setting-group">
+        <label class="setting-label">Enter your API key to enable AI features</label>
+        <div class="input-group">
+          <input type="password" id="api-key-input" placeholder="sk-...">
+          <button class="btn btn-secondary btn-small" id="save-api-key-btn">Save</button>
+        </div>
+        <div class="input-group" style="margin-top: 8px;">
+          <button class="btn btn-secondary btn-small" id="test-api-key-btn">Test Connection</button>
+        </div>
+        <div class="key-status not-saved" id="api-key-status">
+          API key not saved
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">AI Features</div>
+      <div class="toggle-container">
+        <span>Enable AI Insights</span>
+        <div class="toggle active" id="ai-toggle"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">API Usage Statistics</div>
+      <div class="usage-stats">
+        <div class="usage-stat">
+          <div class="usage-value" id="api-calls">0</div>
+          <div class="usage-label">API Calls</div>
+        </div>
+        <div class="usage-stat">
+          <div class="usage-value" id="api-tokens">0</div>
+          <div class="usage-label">Tokens Used</div>
+        </div>
+        <div class="usage-stat">
+          <div class="usage-value" id="api-cost">$0.00</div>
+          <div class="usage-label">Est. Cost</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-small" id="reset-stats-btn" style="margin-top: 12px;">Reset Stats</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Data Management</div>
+      <div class="button-group">
+        <button class="btn btn-secondary" id="export-btn">Export Progress</button>
+        <button class="btn btn-secondary" id="import-btn">Import Progress</button>
+        <input type="file" class="file-input" id="import-file" accept=".json">
+      </div>
+      <button class="btn btn-danger" id="clear-data-btn" style="margin-top: 12px; width: 100%;">
+        Clear All Data
+      </button>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal">
+      <h3 id="modal-title">Confirm Action</h3>
+      <p id="modal-message">Are you sure you want to proceed?</p>
+      <div class="modal-buttons">
+        <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+        <button class="btn btn-danger" id="modal-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Options Modal -->
+  <div class="modal-overlay" id="import-modal">
+    <div class="modal">
+      <h3>Import Options</h3>
+      <p>How would you like to import the data?</p>
+      <div class="modal-buttons" style="flex-direction: column;">
+        <button class="btn btn-primary" id="import-merge">Merge with existing</button>
+        <button class="btn btn-secondary" id="import-replace">Replace all data</button>
+        <button class="btn btn-secondary" id="import-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
