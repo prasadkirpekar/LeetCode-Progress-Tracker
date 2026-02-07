@@ -2,6 +2,8 @@
 
 A Chrome extension that automatically tracks your LeetCode problem-solving activity locally.
 
+[Download from Chrome store](https://chromewebstore.google.com/detail/leetcode-progress-tracker/inhpllaegcinnlokckfhmpcnjgfdmnap)
+
 ## Features
 
 ### Automatic Tracking
