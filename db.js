@@ -41,12 +41,6 @@ function initDB() {
         database.createObjectStore('settings', { keyPath: 'key' });
       }
 
-      // Create apiUsage store
-      if (!database.objectStoreNames.contains('apiUsage')) {
-        const apiUsageStore = database.createObjectStore('apiUsage', { keyPath: 'timestamp' });
-        apiUsageStore.createIndex('date', 'date', { unique: false });
-      }
-
       console.log('IndexedDB schema created');
     };
   });
@@ -195,76 +189,16 @@ async function getAllSettings() {
   });
 }
 
-// Record API usage
-async function recordApiUsage(tokens, cost) {
-  const database = await initDB();
-  const now = new Date();
-
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction(['apiUsage'], 'readwrite');
-    const store = transaction.objectStore('apiUsage');
-    const request = store.add({
-      timestamp: now.toISOString(),
-      date: now.toISOString().split('T')[0],
-      tokens: tokens,
-      cost: cost
-    });
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-// Get API usage statistics
-async function getApiUsageStats() {
-  const database = await initDB();
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction(['apiUsage'], 'readonly');
-    const store = transaction.objectStore('apiUsage');
-    const request = store.getAll();
-
-    request.onsuccess = () => {
-      const records = request.result || [];
-      const stats = {
-        totalCalls: records.length,
-        totalTokens: records.reduce((sum, r) => sum + (r.tokens || 0), 0),
-        estimatedCost: records.reduce((sum, r) => sum + (r.cost || 0), 0)
-      };
-      resolve(stats);
-    };
-    request.onerror = () => reject(request.error);
-  });
-}
-
-// Reset API usage statistics
-async function resetApiUsageStats() {
-  const database = await initDB();
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction(['apiUsage'], 'readwrite');
-    const store = transaction.objectStore('apiUsage');
-    const request = store.clear();
-
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
-}
-
 // Export all data to JSON
 async function exportData() {
   const problems = await getAllProblems();
   const settings = await getAllSettings();
-  const apiUsageStats = await getApiUsageStats();
-
-  // Don't export the API key for security
-  const exportSettings = { ...settings };
-  delete exportSettings.openaiApiKey;
 
   return {
     version: 1,
     exportedAt: new Date().toISOString(),
     problems: problems,
-    settings: exportSettings,
-    apiUsageStats: apiUsageStats
+    settings: settings
   };
 }
 
@@ -310,15 +244,6 @@ async function importData(data, mergeMode = false) {
     }
   }
 
-  // Import settings (except API key)
-  if (data.settings) {
-    for (const [key, value] of Object.entries(data.settings)) {
-      if (key !== 'openaiApiKey') {
-        await saveSetting(key, value);
-      }
-    }
-  }
-
   return { success: true, problemsImported: data.problems?.length || 0 };
 }
 
@@ -326,7 +251,7 @@ async function importData(data, mergeMode = false) {
 async function clearAllData() {
   const database = await initDB();
 
-  const stores = ['problems', 'settings', 'apiUsage'];
+  const stores = ['problems', 'settings'];
 
   for (const storeName of stores) {
     await new Promise((resolve, reject) => {
@@ -341,83 +266,6 @@ async function clearAllData() {
   return { success: true };
 }
 
-// Encryption helpers using Web Crypto API
-async function getEncryptionKey() {
-  let keyData = await getSetting('encryptionKey');
-
-  if (!keyData) {
-    // Generate a new key
-    const key = await crypto.subtle.generateKey(
-      { name: 'AES-GCM', length: 256 },
-      true,
-      ['encrypt', 'decrypt']
-    );
-    keyData = await crypto.subtle.exportKey('jwk', key);
-    await saveSetting('encryptionKey', keyData);
-  }
-
-  return crypto.subtle.importKey(
-    'jwk',
-    keyData,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt']
-  );
-}
-
-async function encryptApiKey(apiKey) {
-  const key = await getEncryptionKey();
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encodedKey = new TextEncoder().encode(apiKey);
-
-  const encrypted = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv: iv },
-    key,
-    encodedKey
-  );
-
-  return {
-    iv: Array.from(iv),
-    data: Array.from(new Uint8Array(encrypted))
-  };
-}
-
-async function decryptApiKey(encryptedData) {
-  if (!encryptedData || !encryptedData.iv || !encryptedData.data) {
-    return null;
-  }
-
-  try {
-    const key = await getEncryptionKey();
-    const iv = new Uint8Array(encryptedData.iv);
-    const data = new Uint8Array(encryptedData.data);
-
-    const decrypted = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: iv },
-      key,
-      data
-    );
-
-    return new TextDecoder().decode(decrypted);
-  } catch (error) {
-    console.error('Failed to decrypt API key:', error);
-    return null;
-  }
-}
-
-// Save encrypted API key
-async function saveApiKey(apiKey) {
-  const encrypted = await encryptApiKey(apiKey);
-  await saveSetting('openaiApiKey', encrypted);
-}
-
-// Get decrypted API key
-async function getApiKey() {
-  const encrypted = await getSetting('openaiApiKey');
-  if (!encrypted) return null;
-  return decryptApiKey(encrypted);
-}
-
 // Export functions for use in other scripts
 export {
   initDB,
@@ -428,12 +276,7 @@ export {
   getSetting,
   saveSetting,
   getAllSettings,
-  recordApiUsage,
-  getApiUsageStats,
-  resetApiUsageStats,
   exportData,
   importData,
-  clearAllData,
-  saveApiKey,
-  getApiKey
+  clearAllData
 };

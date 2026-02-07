@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "LeetCode Progress Tracker",
   "version": "1.0.1",
-  "description": "Track your LeetCode problem-solving progress with AI-powered insights",
+  "description": "Track your LeetCode problem-solving progress with automatic attempt logging, statistics, and insights",
   "permissions": [
     "storage"
   ],

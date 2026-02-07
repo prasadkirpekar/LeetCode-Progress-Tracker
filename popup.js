@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize
   initTabs();
   loadOverview();
-  loadSettings();
 
   // Tab switching
   function initTabs() {
@@ -25,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (targetId === 'overview') loadOverview();
         if (targetId === 'insights') loadInsights();
         if (targetId === 'problems') loadProblems();
-        if (targetId === 'settings') loadSettings();
       });
     });
   }
@@ -93,9 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
               ${activity.passed ? '✓' : '✗'}
             </div>
             <div class="activity-info">
-              <div class="activity-title">${escapeHtml(activity.problemTitle)}</div>
+              <div class="activity-title">${escapeHtml(activity.problemTitle || activity.problemSlug)}</div>
               <div class="activity-meta">
-                <span class="difficulty ${activity.problemDifficulty?.toLowerCase()}">${activity.problemDifficulty}</span>
+                <span class="difficulty ${activity.problemDifficulty?.toLowerCase()}">${activity.problemDifficulty || 'Unknown'}</span>
                 <span>${activity.type === 'submit' ? 'Submit' : 'Run'}</span>
                 <span>${activity.totalCorrect}/${activity.totalTestcases} passed</span>
               </div>
@@ -160,9 +158,9 @@ document.addEventListener('DOMContentLoaded', () => {
         attentionContainer.innerHTML = stats.problemsNeedingAttention.map(problem => `
           <div class="problem-item" data-slug="${problem.slug}">
             <div class="problem-info">
-              <div class="problem-title">${escapeHtml(problem.title)}</div>
+              <div class="problem-title">${escapeHtml(problem.title || problem.slug)}</div>
               <div class="problem-meta">
-                <span class="difficulty ${problem.difficulty?.toLowerCase()}">${problem.difficulty}</span>
+                <span class="difficulty ${problem.difficulty?.toLowerCase()}">${problem.difficulty || 'Unknown'}</span>
                 <span>${problem.failedAttempts} failed attempts</span>
               </div>
             </div>
@@ -181,44 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error loading insights:', error);
     }
   }
-
-  // Generate AI Insights button
-  document.getElementById('generate-insights-btn').addEventListener('click', async () => {
-    const btn = document.getElementById('generate-insights-btn');
-    const container = document.getElementById('ai-insights');
-
-    btn.disabled = true;
-    btn.textContent = 'Generating...';
-    container.innerHTML = '<div class="loading"><div class="spinner"></div>Generating insights...</div>';
-
-    try {
-      const response = await sendMessage({ type: 'generateInsights' });
-
-      if (response.success) {
-        container.innerHTML = `
-          <div class="insights-content">${formatMarkdown(response.content)}</div>
-          <div style="margin-top: 12px; font-size: 11px; color: #666;">
-            Tokens used: ${response.tokens} | Cost: $${response.cost.toFixed(4)}
-          </div>
-        `;
-      } else {
-        container.innerHTML = `
-          <div class="empty-state" style="color: #f87171;">
-            <p>${escapeHtml(response.error)}</p>
-          </div>
-        `;
-      }
-    } catch (error) {
-      container.innerHTML = `
-        <div class="empty-state" style="color: #f87171;">
-          <p>Failed to generate insights: ${escapeHtml(error.message)}</p>
-        </div>
-      `;
-    }
-
-    btn.disabled = false;
-    btn.textContent = 'Generate AI Insights';
-  });
 
   // Load Problems tab
   async function loadProblems() {
@@ -254,9 +214,9 @@ document.addEventListener('DOMContentLoaded', () => {
       listContainer.innerHTML = problems.map(problem => `
         <div class="problem-item" data-slug="${problem.slug}">
           <div class="problem-info">
-            <div class="problem-title">${escapeHtml(problem.title)}</div>
+            <div class="problem-title">${escapeHtml(problem.title || problem.slug)}</div>
             <div class="problem-meta">
-              <span class="difficulty ${problem.difficulty?.toLowerCase()}">${problem.difficulty}</span>
+              <span class="difficulty ${problem.difficulty?.toLowerCase()}">${problem.difficulty || 'Unknown'}</span>
               <span>${problem.attempts.length} attempts</span>
               <span class="status ${problem.solved ? 'solved' : 'unsolved'}">
                 ${problem.solved ? 'Solved' : 'Unsolved'}
@@ -264,8 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="problem-tags">
               ${(problem.tags || []).slice(0, 3).map(tag =>
-        `<span class="tag">${escapeHtml(tag)}</span>`
-      ).join('')}
+                `<span class="tag">${escapeHtml(tag)}</span>`
+              ).join('')}
             </div>
           </div>
           <div class="problem-arrow">→</div>
@@ -293,9 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const problem = response.data;
 
       // Update detail view
-      document.getElementById('detail-title').textContent = problem.title;
-      document.getElementById('detail-difficulty').textContent = problem.difficulty;
-      document.getElementById('detail-difficulty').className = `difficulty ${problem.difficulty?.toLowerCase()}`;
+      document.getElementById('detail-title').textContent = problem.title || problem.slug;
+      document.getElementById('detail-difficulty').textContent = problem.difficulty || 'Unknown';
+      document.getElementById('detail-difficulty').className = `difficulty ${problem.difficulty?.toLowerCase() || ''}`;
       document.getElementById('detail-attempts').textContent = `${problem.attempts.length} attempts`;
       document.getElementById('detail-status').textContent = problem.solved ? 'Solved' : 'Unsolved';
       document.getElementById('detail-status').className = `status ${problem.solved ? 'solved' : 'unsolved'}`;
@@ -343,12 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `).join('');
 
-      // Clear previous analysis
-      document.getElementById('problem-analysis').innerHTML = '';
-
-      // Store slug for analysis
-      document.getElementById('analyze-problem-btn').dataset.slug = slug;
-
       // Show detail view
       listContainer.style.display = 'none';
       detailContainer.classList.add('active');
@@ -361,164 +315,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('back-to-list').addEventListener('click', () => {
     document.getElementById('problem-list').style.display = 'block';
     document.getElementById('problem-detail').classList.remove('active');
-  });
-
-  // Analyze problem with AI
-  document.getElementById('analyze-problem-btn').addEventListener('click', async () => {
-    const btn = document.getElementById('analyze-problem-btn');
-    const container = document.getElementById('problem-analysis');
-    const slug = btn.dataset.slug;
-
-    btn.disabled = true;
-    btn.textContent = 'Analyzing...';
-    container.innerHTML = '<div class="loading"><div class="spinner"></div>Analyzing problem...</div>';
-
-    try {
-      const response = await sendMessage({ type: 'analyzeProblem', slug });
-
-      if (response.success) {
-        container.innerHTML = `
-          <div class="card" style="margin-top: 12px;">
-            <div class="card-title">AI Analysis</div>
-            <div class="insights-content">${formatMarkdown(response.content)}</div>
-            <div style="margin-top: 12px; font-size: 11px; color: #666;">
-              Tokens used: ${response.tokens} | Cost: $${response.cost.toFixed(4)}
-            </div>
-          </div>
-        `;
-      } else {
-        container.innerHTML = `
-          <div class="card" style="margin-top: 12px; color: #f87171;">
-            <p>${escapeHtml(response.error)}</p>
-          </div>
-        `;
-      }
-    } catch (error) {
-      container.innerHTML = `
-        <div class="card" style="margin-top: 12px; color: #f87171;">
-          <p>Failed to analyze: ${escapeHtml(error.message)}</p>
-        </div>
-      `;
-    }
-
-    btn.disabled = false;
-    btn.textContent = 'Analyze with AI';
-  });
-
-  // Load Settings tab
-  async function loadSettings() {
-    try {
-      // Load settings
-      const settingsResponse = await sendMessage({ type: 'getSettings' });
-      if (settingsResponse.success) {
-        const settings = settingsResponse.data;
-
-        // API key status
-        const keyStatus = document.getElementById('api-key-status');
-        if (settings.hasApiKey) {
-          keyStatus.textContent = '✓ API key saved';
-          keyStatus.className = 'key-status saved';
-        } else {
-          keyStatus.textContent = 'API key not saved';
-          keyStatus.className = 'key-status not-saved';
-        }
-
-        // AI toggle
-        const aiToggle = document.getElementById('ai-toggle');
-        if (settings.aiEnabled !== false) {
-          aiToggle.classList.add('active');
-        } else {
-          aiToggle.classList.remove('active');
-        }
-      }
-
-      // Load API usage stats
-      const usageResponse = await sendMessage({ type: 'getApiUsageStats' });
-      if (usageResponse.success) {
-        const usage = usageResponse.data;
-        document.getElementById('api-calls').textContent = usage.totalCalls;
-        document.getElementById('api-tokens').textContent = formatNumber(usage.totalTokens);
-        document.getElementById('api-cost').textContent = '$' + usage.estimatedCost.toFixed(4);
-      }
-    } catch (error) {
-      console.error('Error loading settings:', error);
-    }
-  }
-
-  // Save API key
-  document.getElementById('save-api-key-btn').addEventListener('click', async () => {
-    const input = document.getElementById('api-key-input');
-    const apiKey = input.value.trim();
-
-    if (!apiKey) {
-      alert('Please enter an API key');
-      return;
-    }
-
-    try {
-      await sendMessage({ type: 'saveApiKey', apiKey });
-      input.value = '';
-      loadSettings();
-      alert('API key saved successfully');
-    } catch (error) {
-      alert('Failed to save API key: ' + error.message);
-    }
-  });
-
-  // Test API key
-  document.getElementById('test-api-key-btn').addEventListener('click', async () => {
-    const input = document.getElementById('api-key-input');
-    const apiKey = input.value.trim();
-
-    if (!apiKey) {
-      alert('Please enter an API key to test');
-      return;
-    }
-
-    const btn = document.getElementById('test-api-key-btn');
-    btn.disabled = true;
-    btn.textContent = 'Testing...';
-
-    try {
-      const response = await sendMessage({ type: 'testApiKey', apiKey });
-      if (response.success) {
-        alert('API key is valid!');
-      } else {
-        alert('API key test failed: ' + response.error);
-      }
-    } catch (error) {
-      alert('Test failed: ' + error.message);
-    }
-
-    btn.disabled = false;
-    btn.textContent = 'Test Connection';
-  });
-
-  // AI toggle
-  document.getElementById('ai-toggle').addEventListener('click', async () => {
-    const toggle = document.getElementById('ai-toggle');
-    const isActive = toggle.classList.contains('active');
-
-    toggle.classList.toggle('active');
-
-    try {
-      await sendMessage({ type: 'saveSetting', key: 'aiEnabled', value: !isActive });
-    } catch (error) {
-      console.error('Error saving AI toggle:', error);
-      toggle.classList.toggle('active'); // Revert on error
-    }
-  });
-
-  // Reset stats
-  document.getElementById('reset-stats-btn').addEventListener('click', async () => {
-    if (confirm('Reset all API usage statistics?')) {
-      try {
-        await sendMessage({ type: 'resetApiUsageStats' });
-        loadSettings();
-      } catch (error) {
-        alert('Failed to reset stats: ' + error.message);
-      }
-    }
   });
 
   // Export data
@@ -604,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('clear-data-btn').addEventListener('click', () => {
     document.getElementById('modal-title').textContent = 'Clear All Data?';
     document.getElementById('modal-message').textContent =
-      'This will permanently delete all tracked problems and settings. This action cannot be undone.';
+      'This will permanently delete all tracked problems. This action cannot be undone.';
     document.getElementById('confirm-modal').classList.add('active');
   });
 
@@ -620,7 +416,6 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('All data cleared');
       loadOverview();
       loadProblems();
-      loadSettings();
     } catch (error) {
       alert('Failed to clear data: ' + error.message);
     }
@@ -632,36 +427,5 @@ document.addEventListener('DOMContentLoaded', () => {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-  }
-
-  function formatNumber(num) {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-    return num.toString();
-  }
-
-  function formatMarkdown(text) {
-    if (!text) return '';
-
-    // Escape HTML first
-    let html = escapeHtml(text);
-
-    // Convert markdown-like formatting
-    // Headers
-    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-    // Bold
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
-    // Lists
-    html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
-
-    // Line breaks
-    html = html.replace(/\n/g, '<br>');
-
-    return html;
   }
 });

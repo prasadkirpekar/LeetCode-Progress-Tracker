@@ -304,12 +304,6 @@
       transform: translateY(-1px);
     }
 
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
     .btn-secondary {
       background: #333;
       color: #e0e0e0;
@@ -463,174 +457,10 @@
       word-break: break-all;
     }
 
-    /* Settings */
-    .setting-group {
-      margin-bottom: 20px;
-    }
-
-    .setting-label {
-      font-size: 13px;
-      color: #888;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .input-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    input[type="text"],
-    input[type="password"] {
-      flex: 1;
-      padding: 10px 12px;
-      background: #333;
-      border: 1px solid #444;
-      border-radius: 8px;
-      color: #e0e0e0;
-      font-size: 13px;
-    }
-
-    input[type="text"]:focus,
-    input[type="password"]:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-
-    .toggle-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 0;
-    }
-
-    .toggle {
-      position: relative;
-      width: 44px;
-      height: 24px;
-      background: #333;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    .toggle.active {
-      background: #667eea;
-    }
-
-    .toggle::after {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: white;
-      border-radius: 50%;
-      top: 2px;
-      left: 2px;
-      transition: transform 0.2s ease;
-    }
-
-    .toggle.active::after {
-      transform: translateX(20px);
-    }
-
-    .usage-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .usage-stat {
-      text-align: center;
-    }
-
-    .usage-value {
-      font-size: 18px;
-      font-weight: 600;
-      color: #e0e0e0;
-    }
-
-    .usage-label {
-      font-size: 11px;
-      color: #666;
-    }
-
     .button-group {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
-    }
-
-    /* Insights */
-    .insights-content {
-      white-space: pre-wrap;
-      line-height: 1.6;
-      font-size: 13px;
-    }
-
-    .insights-content h1,
-    .insights-content h2,
-    .insights-content h3 {
-      color: #667eea;
-      margin: 16px 0 8px;
-    }
-
-    .insights-content ul {
-      margin-left: 20px;
-    }
-
-    .insights-content li {
-      margin-bottom: 4px;
-    }
-
-    .loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 20px;
-      color: #888;
-    }
-
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid #333;
-      border-top-color: #667eea;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: #666;
-    }
-
-    .empty-state p {
-      margin-top: 8px;
-      font-size: 13px;
-    }
-
-    .key-status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 8px;
-      font-size: 12px;
-    }
-
-    .key-status.saved {
-      color: #4ade80;
-    }
-
-    .key-status.not-saved {
-      color: #f87171;
     }
 
     .improvement-item {
@@ -711,6 +541,17 @@
       gap: 12px;
       justify-content: center;
     }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    .empty-state p {
+      margin-top: 8px;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -784,19 +625,7 @@
   <!-- Insights Tab -->
   <div class="tab-content" id="insights">
     <div class="card">
-      <div class="card-title">AI-Powered Insights</div>
-      <button class="btn btn-primary" id="generate-insights-btn" style="width: 100%; margin-bottom: 16px;">
-        Generate AI Insights
-      </button>
-      <div id="ai-insights">
-        <div class="empty-state">
-          <p>Click the button above to generate personalized insights using AI.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Improvement Points</div>
+      <div class="card-title">Performance Summary</div>
       <div id="improvement-points">
         <div class="improvement-item">
           <div class="improvement-icon">📊</div>
@@ -853,10 +682,6 @@
         </div>
         <div class="problem-tags" id="detail-tags"></div>
       </div>
-      <button class="btn btn-secondary btn-small" id="analyze-problem-btn" style="margin-bottom: 16px;">
-        Analyze with AI
-      </button>
-      <div id="problem-analysis"></div>
       <div class="card-title" style="margin-top: 16px;">Attempt History</div>
       <div id="attempt-history"></div>
     </div>
@@ -864,50 +689,6 @@
 
   <!-- Settings Tab -->
   <div class="tab-content" id="settings">
-    <div class="card">
-      <div class="card-title">OpenAI API Key</div>
-      <div class="setting-group">
-        <label class="setting-label">Enter your API key to enable AI features</label>
-        <div class="input-group">
-          <input type="password" id="api-key-input" placeholder="sk-...">
-          <button class="btn btn-secondary btn-small" id="save-api-key-btn">Save</button>
-        </div>
-        <div class="input-group" style="margin-top: 8px;">
-          <button class="btn btn-secondary btn-small" id="test-api-key-btn">Test Connection</button>
-        </div>
-        <div class="key-status not-saved" id="api-key-status">
-          API key not saved
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">AI Features</div>
-      <div class="toggle-container">
-        <span>Enable AI Insights</span>
-        <div class="toggle active" id="ai-toggle"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">API Usage Statistics</div>
-      <div class="usage-stats">
-        <div class="usage-stat">
-          <div class="usage-value" id="api-calls">0</div>
-          <div class="usage-label">API Calls</div>
-        </div>
-        <div class="usage-stat">
-          <div class="usage-value" id="api-tokens">0</div>
-          <div class="usage-label">Tokens Used</div>
-        </div>
-        <div class="usage-stat">
-          <div class="usage-value" id="api-cost">$0.00</div>
-          <div class="usage-label">Est. Cost</div>
-        </div>
-      </div>
-      <button class="btn btn-secondary btn-small" id="reset-stats-btn" style="margin-top: 12px;">Reset Stats</button>
-    </div>
-
     <div class="card">
       <div class="card-title">Data Management</div>
       <div class="button-group">

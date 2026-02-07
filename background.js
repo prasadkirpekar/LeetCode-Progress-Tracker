@@ -1,6 +1,5 @@
 // Background service worker for LeetCode Progress Tracker
 import * as LeetCodeDB from './db.js';
-import * as LeetCodeAPI from './api.js';
 
 console.log('[LeetCode Tracker] Background service worker started');
 
@@ -35,47 +34,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         case 'getProblem':
           const problem = await LeetCodeDB.getProblem(message.slug);
           sendResponse({ success: true, data: problem });
-          break;
-
-        case 'getSettings':
-          const settings = await LeetCodeDB.getAllSettings();
-          const hasApiKey = !!(await LeetCodeDB.getApiKey());
-          sendResponse({ success: true, data: { ...settings, hasApiKey } });
-          break;
-
-        case 'saveApiKey':
-          await LeetCodeDB.saveApiKey(message.apiKey);
-          sendResponse({ success: true });
-          break;
-
-        case 'testApiKey':
-          const testResult = await LeetCodeAPI.testApiKey(message.apiKey);
-          sendResponse(testResult);
-          break;
-
-        case 'saveSetting':
-          await LeetCodeDB.saveSetting(message.key, message.value);
-          sendResponse({ success: true });
-          break;
-
-        case 'getApiUsageStats':
-          const usageStats = await LeetCodeDB.getApiUsageStats();
-          sendResponse({ success: true, data: usageStats });
-          break;
-
-        case 'resetApiUsageStats':
-          await LeetCodeDB.resetApiUsageStats();
-          sendResponse({ success: true });
-          break;
-
-        case 'generateInsights':
-          const insights = await generateAIInsights();
-          sendResponse(insights);
-          break;
-
-        case 'analyzeProblem':
-          const analysis = await analyzeProblemWithAI(message.slug);
-          sendResponse(analysis);
           break;
 
         case 'exportData':
@@ -234,103 +192,6 @@ async function getStatistics() {
   stats.problemsNeedingAttention = stats.problemsNeedingAttention.slice(0, 5);
 
   return stats;
-}
-
-// Generate AI insights using OpenAI
-async function generateAIInsights() {
-  const apiKey = await LeetCodeDB.getApiKey();
-  if (!apiKey) {
-    return { success: false, error: 'OpenAI API key not configured' };
-  }
-
-  const aiEnabled = await LeetCodeDB.getSetting('aiEnabled');
-  if (aiEnabled === false) {
-    return { success: false, error: 'AI features are disabled' };
-  }
-
-  const stats = await getStatistics();
-  const problems = await LeetCodeDB.getAllProblems();
-
-  // Prepare summary data for AI
-  const summary = {
-    totalProblems: stats.totalProblems,
-    totalSolved: stats.totalSolved,
-    successRate: stats.successRate,
-    difficulty: stats.difficulty,
-    failurePatterns: stats.failurePatterns,
-    topicStats: stats.topicStats,
-    problemsNeedingAttention: stats.problemsNeedingAttention,
-    recentProblems: problems.slice(-10).map(p => ({
-      title: p.title,
-      difficulty: p.difficulty,
-      solved: p.solved,
-      attempts: p.attempts.length,
-      tags: p.tags
-    }))
-  };
-
-  const prompt = `Analyze this LeetCode progress data and provide:
-1. Key strengths and weaknesses
-2. Specific algorithmic concepts to study
-3. Learning path recommendations
-4. 5 specific LeetCode problems to solve next (with explanations why)
-
-Data: ${JSON.stringify(summary, null, 2)}
-
-Please format your response in clear sections with headers.`;
-
-  const result = await LeetCodeAPI.callOpenAI(apiKey, prompt);
-
-  if (result.success) {
-    // Record API usage
-    await LeetCodeDB.recordApiUsage(result.tokens, result.cost);
-  }
-
-  return result;
-}
-
-// Analyze a specific problem with AI
-async function analyzeProblemWithAI(slug) {
-  const apiKey = await LeetCodeDB.getApiKey();
-  if (!apiKey) {
-    return { success: false, error: 'OpenAI API key not configured' };
-  }
-
-  const aiEnabled = await LeetCodeDB.getSetting('aiEnabled');
-  if (aiEnabled === false) {
-    return { success: false, error: 'AI features are disabled' };
-  }
-
-  const problem = await LeetCodeDB.getProblem(slug);
-  if (!problem) {
-    return { success: false, error: 'Problem not found' };
-  }
-
-  const prompt = `Analyze my attempts at this LeetCode problem and provide specific advice:
-
-Problem: ${problem.title}
-Difficulty: ${problem.difficulty}
-Tags: ${(problem.tags || []).join(', ')}
-Solved: ${problem.solved ? 'Yes' : 'No'}
-Total Attempts: ${problem.attempts.length}
-
-Recent attempts:
-${problem.attempts.slice(-5).map(a => `- ${a.type}: ${a.status} (${a.totalCorrect}/${a.totalTestcases} test cases)${a.compileError ? ' - Compile error: ' + a.compileError.slice(0, 100) : ''}${a.runtimeError ? ' - Runtime error: ' + a.runtimeError.slice(0, 100) : ''}`).join('\n')}
-
-Please provide:
-1. Why I might be struggling with this problem
-2. Key concepts I should review
-3. Step-by-step approach to solve this problem
-4. Common pitfalls to avoid`;
-
-  const result = await LeetCodeAPI.callOpenAI(apiKey, prompt);
-
-  if (result.success) {
-    // Record API usage
-    await LeetCodeDB.recordApiUsage(result.tokens, result.cost);
-  }
-
-  return result;
 }
 
 // Initialize database on startup
